@@ -43,15 +43,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - vs-version: vs2015
-            toolset-version: v140
-            windows-sdk-version: 22621
-          - vs-version: vs2017
-            toolset-version: v141
-            windows-sdk-version: 22621
-          - vs-version: vs2019
-            toolset-version: v142
-            windows-sdk-version: 26100
           - vs-version: vs2022
             toolset-version: v143
             windows-sdk-version: 26100
@@ -63,27 +54,6 @@ jobs:
       with:
         submodules: true
         
-    - name: Install VS 2017 (v141) Build Tools
-      if: matrix.vs-version == 'vs2017'
-      run: |
-        $vsInstallPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-        Start-Process -FilePath "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe" -ArgumentList "modify --installPath `"$vsInstallPath`" --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 --quiet --norestart --nocache" -Wait
-    - name: Install and Setup VS 2015 (v140) Build Tools
-      if: matrix.vs-version == 'vs2015'
-      run: |
-        $vs140Path = "C:/vs140_build_tools"
-        Invoke-WebRequest -Uri "https://aka.ms/vs/15/release/vs_buildtools.exe" -OutFile vs_buildtools.exe
-        Start-Process -FilePath "vs_buildtools.exe" -ArgumentList "--installPath `"$vs140Path`" --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.140 --quiet --wait --norestart --nocache" -Wait
-
-        $vcvarsPath = (Get-ChildItem -Path $vs140Path -Filter "vcvars64.bat" -Recurse | Select-Object -First 1).FullName
-        $cmd = "`"$vcvarsPath`" && powershell -Command `"`$env:PATH;`$env:INCLUDE;`$env:LIB`""
-        $output = cmd.exe /c $cmd
-        $lines = $output -split "`r`n"
-        
-        echo "PATH=$($lines[0]);$($env:PATH)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        echo "INCLUDE=$($lines[1])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        echo "LIB=$($lines[2])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
     - uses: GuillaumeFalourd/setup-windows10-sdk-action@v2.4
       with:
         sdk-version: ${{ matrix.windows-sdk-version }}
@@ -105,26 +75,25 @@ jobs:
         cmake --build . --config Release -j 4
         cmake --build . --config Release --target install
     - name: cache-swiftshader
-      if: matrix.vs-version != 'vs2015' && matrix.vs-version != 'vs2017'
       id: cache-swiftshader
       uses: actions/cache@v5
       with:
         path: swiftshader-install
         key: swiftshader-${{ matrix.vs-version }}-x64-install-20251010
     - name: checkout-swiftshader
-      if: matrix.vs-version != 'vs2015' && matrix.vs-version != 'vs2017' && steps.cache-swiftshader.outputs.cache-hit != 'true'
+      if: steps.cache-swiftshader.outputs.cache-hit != 'true'
       uses: actions/checkout@v6
       with:
         repository: google/swiftshader
         path: swiftshader
         ref: de870ac7518fe2b6bb651ecc22fc36647cf7b986
     - name: checkout-swiftshader-submodules
-      if: matrix.vs-version != 'vs2015' && matrix.vs-version != 'vs2017' && steps.cache-swiftshader.outputs.cache-hit != 'true'
+      if: steps.cache-swiftshader.outputs.cache-hit != 'true'
       run: |
         cd swiftshader
         git -c submodule."third_party/git-hooks".update=none submodule update --init --recursive
     - name: swiftshader
-      if: matrix.vs-version != 'vs2015' && matrix.vs-version != 'vs2017' && steps.cache-swiftshader.outputs.cache-hit != 'true'
+      if: steps.cache-swiftshader.outputs.cache-hit != 'true'
       run: |
         cd swiftshader
         mkdir build-${{ matrix.vs-version }}; cd build-${{ matrix.vs-version }}
@@ -139,7 +108,6 @@ jobs:
         cmake -T ${{ matrix.toolset-version }},host=x64 -A x64,version=10.0.${{ matrix.windows-sdk-version }}.0 -Dprotobuf_DIR="$env:GITHUB_WORKSPACE\protobuf-install\cmake" -DNCNN_VULKAN=ON -DNCNN_BUILD_TESTS=ON ..
         cmake --build . --config Release -j 4
     - name: x64-test
-      if: matrix.vs-version != 'vs2015' && matrix.vs-version != 'vs2017'
       run: |
         echo "[Processor]`nThreadCount=1`n" > build-x64/tests/Release/SwiftShader.ini
         Copy-Item -Path "$env:GITHUB_WORKSPACE\swiftshader-install\vulkan-1.dll" -Destination 'build-x64\tests'
@@ -161,12 +129,3 @@ jobs:
     - name: x64-avx-test
       run: cd build-x64-avx; ctest -C Release --output-on-failure -j 4
 
-    - name: x86
-      run: |
-        mkdir build-x86; cd build-x86
-        cmake -T ${{ matrix.toolset-version }},host=x64 -A Win32,version=10.0.${{ matrix.windows-sdk-version }}.0 -DNCNN_SHARED_LIB=ON -DNCNN_BUILD_TESTS=ON -DNCNN_BUILD_TOOLS=OFF -DNCNN_BUILD_EXAMPLES=OFF ..
-        cmake --build . --config Release -j 4
-    - name: x86-test
-      run: |
-        Copy-Item -Path "build-x86\src\Release\ncnn.dll" -Destination 'build-x86\tests'
-        cd build-x86; ctest -C Release --output-on-failure -j 4
