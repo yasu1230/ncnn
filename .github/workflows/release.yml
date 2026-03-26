@@ -166,31 +166,28 @@ jobs:
       run: |
         rm -rf openmp.framework
         mkdir -p openmp.framework/Headers
-        mkdir -p openmp.framework/Resources
         cp openmp-ios/lib/libomp.a openmp.framework/openmp
         cp -a openmp-ios/include/* openmp.framework/Headers/
-        sed -e 's/__NAME__/openmp/g' -e 's/__IDENTIFIER__/org.llvm.openmp/g' -e 's/__VERSION__/18.1/g' Info.plist > openmp.framework/Resources/Info.plist
+        sed -e 's/__NAME__/openmp/g' -e 's/__IDENTIFIER__/org.llvm.openmp/g' -e 's/__VERSION__/18.1/g' Info.plist > openmp.framework/Info.plist
     - name: package-glslang
       if: matrix.opt.vulkan == 'ON'
       run: |
         rm -rf glslang.framework
         mkdir -p glslang.framework/Headers
-        mkdir -p glslang.framework/Resources
         libtool -static \
             build-arm64/install/lib/libglslang.a \
             build-arm64/install/lib/libSPIRV.a \
             -o build-arm64/install/lib/libglslang_combined.a
         cp build-arm64/install/lib/libglslang_combined.a glslang.framework/glslang
         cp -a build-arm64/install/include/glslang glslang.framework/Headers/
-        sed -e 's/__NAME__/glslang/g' -e 's/__IDENTIFIER__/org.khronos.glslang/g' -e 's/__VERSION__/1.0/g' Info.plist > glslang.framework/Resources/Info.plist
+        sed -e 's/__NAME__/glslang/g' -e 's/__IDENTIFIER__/org.khronos.glslang/g' -e 's/__VERSION__/1.0/g' Info.plist > glslang.framework/Info.plist
     - name: package-ncnn
       run: |
         rm -rf ncnn.framework
         mkdir -p ncnn.framework/Headers
-        mkdir -p ncnn.framework/Resources
         cp build-arm64/install/lib/libncnn.a ncnn.framework/ncnn
         cp -a build-arm64/install/include/* ncnn.framework/Headers/
-        sed -e 's/__NAME__/ncnn/g' -e 's/__IDENTIFIER__/com.tencent.ncnn/g' -e 's/__VERSION__/1.0/g' Info.plist > ncnn.framework/Resources/Info.plist
+        sed -e 's/__NAME__/ncnn/g' -e 's/__IDENTIFIER__/com.tencent.ncnn/g' -e 's/__VERSION__/1.0/g' Info.plist > ncnn.framework/Info.plist
     - name: package
       if: matrix.opt.vulkan == 'OFF'
       run: |
@@ -332,16 +329,14 @@ jobs:
       run: |
         rm -rf openmp.framework
         mkdir -p openmp.framework/Headers
-        mkdir -p openmp.framework/Resources
         cp openmp-ios-simulator/lib/libomp.a openmp.framework/openmp
         cp -a openmp-ios-simulator/include/* openmp.framework/Headers/
-        sed -e 's/__NAME__/openmp/g' -e 's/__IDENTIFIER__/org.llvm.openmp/g' -e 's/__VERSION__/18.1/g' Info.plist > openmp.framework/Resources/Info.plist
+        sed -e 's/__NAME__/openmp/g' -e 's/__IDENTIFIER__/org.llvm.openmp/g' -e 's/__VERSION__/18.1/g' Info.plist > openmp.framework/Info.plist
     - name: package-glslang
       if: matrix.opt.vulkan == 'ON'
       run: |
         rm -rf glslang.framework
         mkdir -p glslang.framework/Headers
-        mkdir -p glslang.framework/Resources
         libtool -static \
             build-x86_64/install/lib/libglslang.a \
             build-x86_64/install/lib/libSPIRV.a \
@@ -355,18 +350,17 @@ jobs:
             build-arm64/install/lib/libglslang_combined.a \
             -o glslang.framework/glslang
         cp -a build-x86_64/install/include/glslang glslang.framework/Headers/
-        sed -e 's/__NAME__/glslang/g' -e 's/__IDENTIFIER__/org.khronos.glslang/g' -e 's/__VERSION__/1.0/g' Info.plist > glslang.framework/Resources/Info.plist
+        sed -e 's/__NAME__/glslang/g' -e 's/__IDENTIFIER__/org.khronos.glslang/g' -e 's/__VERSION__/1.0/g' Info.plist > glslang.framework/Info.plist
     - name: package-ncnn
       run: |
         rm -rf ncnn.framework
         mkdir -p ncnn.framework/Headers
-        mkdir -p ncnn.framework/Resources
         lipo -create \
             build-x86_64/install/lib/libncnn.a \
             build-arm64/install/lib/libncnn.a \
             -o ncnn.framework/ncnn
         cp -a build-x86_64/install/include/* ncnn.framework/Headers/
-        sed -e 's/__NAME__/ncnn/g' -e 's/__IDENTIFIER__/com.tencent.ncnn/g' -e 's/__VERSION__/1.0/g' Info.plist > ncnn.framework/Resources/Info.plist
+        sed -e 's/__NAME__/ncnn/g' -e 's/__IDENTIFIER__/com.tencent.ncnn/g' -e 's/__VERSION__/1.0/g' Info.plist > ncnn.framework/Info.plist
     - name: package
       if: matrix.opt.vulkan == 'OFF'
       run: |
